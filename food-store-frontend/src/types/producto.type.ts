@@ -1,4 +1,5 @@
 import { type Categoria } from './categoria.type';
+import type { Ingrediente } from './ingrediente.type';
 
 export interface Producto {
   id: number;
@@ -10,4 +11,5 @@ export interface Producto {
   stock_disponible: number;
   activo: boolean;
   categorias?: Categoria[]; // Relación N:M
+  ingredientes?: Ingrediente[];
 }

@@ -15,7 +15,8 @@ from core.config import settings
 from app.modules.categoria.models import Categoria
 from app.modules.ingrediente.models import Ingrediente
 from app.modules.producto.models import Producto
-
+from app.modules.pedido.models import Pedido, DetallePedido
+from app.modules.direccion.models import DireccionEntrega
 # Modelos Identidad y Acceso
 from app.modules.usuario.models import Usuario
 

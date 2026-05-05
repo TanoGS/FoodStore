@@ -22,5 +22,20 @@ export const ProductoService = {
   async obtenerPorId(id: number): Promise<Producto> {
     const { data } = await api.get(`/productos/${id}`);
     return data;
+  },
+
+  async crear(data: any): Promise<Producto> {
+    const response = await api.post('/productos/', data);
+    return response.data;
+  },
+
+  async actualizar(id: number, data: any): Promise<Producto> {
+    const response = await api.patch(`/productos/${id}`, data);
+    return response.data;
+  },
+
+  async eliminar(id: number): Promise<void> {
+    await api.delete(`/productos/${id}`);
   }
+
 };

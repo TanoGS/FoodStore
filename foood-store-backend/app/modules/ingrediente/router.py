@@ -6,8 +6,11 @@ from app.modules.ingrediente.schemas import (
     IngredienteCreate, IngredientePublic, IngredienteUpdate, IngredienteList,
 )
 from app.modules.ingrediente.service import IngredienteService
+from app.modules.auth.dependencies import require_roles
 
 router = APIRouter(prefix="/ingredientes", tags=["Ingredientes"])
+
+_STOCK_ROLES = ["ADMIN", "GESTOR_STOCK"]
 
 
 def get_ingrediente_service(session: Session = Depends(get_session)) -> IngredienteService:
@@ -22,6 +25,7 @@ def get_ingrediente_service(session: Session = Depends(get_session)) -> Ingredie
     response_model=IngredientePublic,
     status_code=status.HTTP_201_CREATED,
     summary="Crear un ingrediente",
+    dependencies=[Depends(require_roles(*_STOCK_ROLES))],
 )
 def crear_ingrediente(
     data: IngredienteCreate,
@@ -62,6 +66,7 @@ def obtener_ingrediente(
     response_model=IngredientePublic,
     status_code=status.HTTP_200_OK,
     summary="Actualización parcial de ingrediente",
+    dependencies=[Depends(require_roles(*_STOCK_ROLES))],
 )
 def actualizar_ingrediente(
     id: int,
@@ -75,6 +80,7 @@ def actualizar_ingrediente(
     "/{id}",
     status_code=status.HTTP_200_OK,
     summary="Soft delete de ingrediente",
+    dependencies=[Depends(require_roles(*_STOCK_ROLES))],
 )
 def eliminar_ingrediente(
     id: int,
@@ -88,6 +94,7 @@ def eliminar_ingrediente(
     response_model=IngredientePublic,
     status_code=status.HTTP_200_OK,
     summary="Restaurar ingrediente eliminado (revertir soft-delete)",
+    dependencies=[Depends(require_roles(*_STOCK_ROLES))],
 )
 def restaurar_ingrediente(
     id: int,

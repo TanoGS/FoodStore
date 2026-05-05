@@ -49,7 +49,7 @@ class IngredienteService:
             self._assert_nombre_unique(uow, data.nombre)
             nuevo = Ingrediente.model_validate(data)
             uow.ingredientes.add(nuevo)
-            result = IngredientePublic.model_validate(nuevo)
+            result = IngredientePublic.from_model(nuevo)
         return result
 
     def listar_activos(self, offset: int = 0, limit: int = 20) -> IngredienteList:
@@ -57,7 +57,7 @@ class IngredienteService:
             ingredientes = uow.ingredientes.get_all_activos(offset=offset, limit=limit)
             total = uow.ingredientes.count_activos()
             result = IngredienteList(
-                data=[IngredientePublic.model_validate(i) for i in ingredientes],
+                data=[IngredientePublic.from_model(i) for i in ingredientes],
                 total=total,
             )
         return result
@@ -65,7 +65,7 @@ class IngredienteService:
     def obtener_por_id(self, ingrediente_id: int) -> IngredientePublic:
         with IngredienteUnitOfWork(self._session) as uow:
             ingrediente = self._get_or_404(uow, ingrediente_id)
-            result = IngredientePublic.model_validate(ingrediente)
+            result = IngredientePublic.from_model(ingrediente)
         return result
 
     def actualizar(self, ingrediente_id: int, data: IngredienteUpdate) -> IngredientePublic:
@@ -80,7 +80,7 @@ class IngredienteService:
                 setattr(ingrediente, field, value)
 
             uow.ingredientes.add(ingrediente)
-            result = IngredientePublic.model_validate(ingrediente)
+            result = IngredientePublic.from_model(ingrediente)
 
         return result
 
@@ -109,5 +109,5 @@ class IngredienteService:
                 )
             ingrediente.eliminado_en = None
             uow.ingredientes.add(ingrediente)
-            result = IngredientePublic.model_validate(ingrediente)
+            result = IngredientePublic.from_model(ingrediente)
         return result

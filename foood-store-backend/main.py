@@ -7,12 +7,15 @@ from app.modules.ingrediente.router import router as ingrediente_router
 from app.modules.producto.router import router as producto_router
 
 from app.modules.usuario.router import router as usuarios_router
+from app.modules.pedido.router import router as pedido_router
+from app.modules.direccion.router import router as direccion_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
 
 # Configuración de CORS
 app.add_middleware(
@@ -33,4 +36,5 @@ app.include_router(usuarios_router, prefix=settings.API_V1_STR)
 app.include_router(categoria_router, prefix=settings.API_V1_STR)
 app.include_router(producto_router, prefix=settings.API_V1_STR)
 app.include_router(ingrediente_router, prefix=settings.API_V1_STR)
-
+app.include_router(pedido_router, prefix=settings.API_V1_STR)
+app.include_router(direccion_router, prefix=settings.API_V1_STR)

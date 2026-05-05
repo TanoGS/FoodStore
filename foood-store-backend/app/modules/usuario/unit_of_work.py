@@ -1,13 +1,8 @@
 from sqlmodel import Session
+from core.unit_of_work import UnitOfWork
 from .repository import UsuarioRepository
 
-class UsuarioUnitOfWork:
-    def __init__(self, session: Session):
-        self.session = session
+class UsuarioUnitOfWork(UnitOfWork):
+    def __init__(self, session: Session) -> None:
+        super().__init__(session)
         self.usuarios = UsuarioRepository(session)
-
-    def commit(self):
-        self.session.commit()
-
-    def rollback(self):
-        self.session.rollback()

@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:5173"]
 
+    SECRET_KEY: str
+    
     class Config:
         env_file = ".env"
 

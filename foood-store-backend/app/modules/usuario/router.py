@@ -1,45 +1,47 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
-
 from core.database import get_session
-from .schemas import UsuarioCreate, UsuarioResponse, UsuarioUpdate
-from .unit_of_work import UsuarioUnitOfWork
+from .schemas import UsuarioCreate, UsuarioPublic, UsuarioList, Token
 from .service import UsuarioService
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 def get_usuario_service(session: Session = Depends(get_session)) -> UsuarioService:
-    return UsuarioService(UsuarioUnitOfWork(session))
+    return UsuarioService(session)
 
-@router.post("/registro", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
-def registrar_nuevo_usuario(
-    usuario_in: UsuarioCreate, 
-    service: UsuarioService = Depends(get_usuario_service)
+@router.post("/registro", response_model=UsuarioPublic, status_code=status.HTTP_201_CREATED)
+def registrar(data: UsuarioCreate, svc: UsuarioService = Depends(get_usuario_service)):
+    return svc.registrar_usuario(data)
+
+@router.post("/login", response_model=Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), svc: UsuarioService = Depends(get_usuario_service)):
+    return svc.login(form_data.username, form_data.password)
+
+@router.get("/", response_model=UsuarioList)
+def listar(offset: int = 0, limit: int = 20, svc: UsuarioService = Depends(get_usuario_service)):
+    return svc.listar_usuarios(offset, limit)
+
+@router.delete("/{id}", status_code=status.HTTP_200_OK, summary="Eliminar usuario (Soft Delete)")
+def eliminar_usuario(
+    id: int, 
+    svc: UsuarioService = Depends(get_usuario_service)
 ):
-    return service.registrar_usuario(usuario_in)
+    return svc.eliminar_logicamente(id)
 
-@router.get("/", response_model=list[UsuarioResponse])
-def listar_usuarios(skip: int = 0, limit: int = 100, service: UsuarioService = Depends(get_usuario_service)):
-    return service.obtener_usuarios(skip, limit)
 
-@router.get("/activos", response_model=list[UsuarioResponse])
-def get_activos(skip: int = 0, limit: int = 100, service: UsuarioService = Depends(get_usuario_service)):
-    """Lista solo los usuarios activos."""
-    return service.listar_activos(skip, limit)
+@router.patch("/{id}/reactivar", response_model=UsuarioPublic, status_code=status.HTTP_200_OK, summary="Reactivar usuario eliminado")
+def reactivar_usuario(
+    id: int, 
+    svc: UsuarioService = Depends(get_usuario_service)
+):
+    return svc.reactivar_usuario(id)
 
-@router.get("/eliminados", response_model=list[UsuarioResponse])
-def get_eliminados(skip: int = 0, limit: int = 100, service: UsuarioService = Depends(get_usuario_service)):
-    """Lista solo los usuarios que tienen soft-delete (inactivos)."""
-    return service.listar_eliminados(skip, limit)
-
-@router.get("/{id}", response_model=UsuarioResponse)
-def obtener_usuario(id: int, service: UsuarioService = Depends(get_usuario_service)):
-    return service.obtener_usuario_por_id(id)
-
-@router.patch("/{id}", response_model=UsuarioResponse)
-def actualizar_usuario(id: int, usuario_in: UsuarioUpdate, service: UsuarioService = Depends(get_usuario_service)):
-    return service.actualizar_usuario(id, usuario_in)
-
-@router.delete("/{id}", status_code=status.HTTP_200_OK)
-def eliminar_usuario(id: int, service: UsuarioService = Depends(get_usuario_service)):
-    return service.eliminar_usuario(id)
+@router.get("/gestion", response_model=UsuarioList)
+def listar_gestion(
+    offset: int = 0, 
+    limit: int = 100, 
+    svc: UsuarioService = Depends(get_usuario_service)
+):
+    """Endpoint exclusivo para el panel de administración."""
+    return svc.listar_para_gestion(offset, limit)

@@ -1,29 +1,33 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List
+from sqlmodel import SQLModel
 from datetime import datetime
 from .models import RolUsuario
 
-class UsuarioBase(BaseModel):
-    email: EmailStr
-    nombre: str = Field(..., max_length=100)
-    apellido: str = Field(..., max_length=100)
+class UsuarioBase(SQLModel):
+    email: str
+    nombre: str
+    apellido: str
     rol: RolUsuario = RolUsuario.CLIENTE
 
 class UsuarioCreate(UsuarioBase):
-    password: str = Field(..., min_length=2)
+    password: str
 
-class UsuarioResponse(UsuarioBase):
-    id: int
-    activo: bool
-    creado_en: datetime
-    eliminado_en: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-class UsuarioUpdate(BaseModel):
+class UsuarioUpdate(SQLModel):
     nombre: Optional[str] = None
     apellido: Optional[str] = None
     rol: Optional[RolUsuario] = None
     activo: Optional[bool] = None
-    password: Optional[str] = Field(None, min_length=2)
+
+class UsuarioPublic(UsuarioBase):
+    id: int
+    activo: bool
+    creado_en: datetime
+
+class UsuarioList(SQLModel):
+    data: List[UsuarioPublic]
+    total: int
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str
+    user: UsuarioPublic

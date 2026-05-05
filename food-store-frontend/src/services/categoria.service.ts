@@ -20,5 +20,27 @@ export const CategoriaService = {
     }
     
     return [];
+  },
+
+  // MÉTODOS PARA EL CRUD DEL ADMIN 
+
+  async listarTodas(): Promise<Categoria[]> {
+    const { data } = await api.get('/categorias/');
+    return data?.data || data || [];
+  },
+
+  async crear(data: Partial<Categoria>): Promise<Categoria> {
+    const response = await api.post('/categorias/', data);
+    return response.data;
+  },
+
+  async actualizar(id: number, data: Partial<Categoria>): Promise<Categoria> {
+    const response = await api.patch(`/categorias/${id}`, data);
+    return response.data;
+  },
+
+  async eliminar(id: number): Promise<void> {
+    await api.delete(`/categorias/${id}`);
   }
+  
 };

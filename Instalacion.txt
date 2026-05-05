@@ -14,3 +14,11 @@ Run back: uvicorn main:app --reload
 Encender motor: .\.venv\Scripts\Activate.ps1
 
 http://127.0.0.1:8000/docs
+
+pip install "python-jose[cryptography]" "passlib[bcrypt]" python-multipart
+
+
+
+Super Admin:
+admin@foodstore.com
+admin123
