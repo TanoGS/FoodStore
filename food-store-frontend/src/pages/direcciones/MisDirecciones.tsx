@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Home, Star, X } from 'lucide-react';
-import { DireccionService } from '../../services/direccion.service';
+import { DireccionService, type Direccion } from '../../services/direccion.service';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 
 export default function MisDirecciones() {
-  const [direcciones, setDirecciones] = useState<any[]>([]);
+  const [direcciones, setDirecciones] = useState<Direccion[]>([]);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ export default function MisDirecciones() {
     departamento: '',
     localidad: 'Mendoza', // Ciudad por defecto
     referencias: '',
-    es_predeterminada: false
+    es_principal: false
   });
 
   const cargarDirecciones = async () => {
@@ -47,7 +47,7 @@ export default function MisDirecciones() {
       await DireccionService.crear(formData);
       setModalAbierto(false);
       setFormData({
-        calle: '', numero: '', piso: '', departamento: '', localidad: 'Mendoza', referencias: '', es_predeterminada: false
+        calle: '', numero: '', piso: '', departamento: '', localidad: 'Mendoza', referencias: '', es_principal: false
       });
       cargarDirecciones(); // Recargar la lista
     } catch (error) {
@@ -89,10 +89,10 @@ export default function MisDirecciones() {
             <div 
               key={dir.id} 
               className={`p-6 rounded-2xl border-2 relative transition-all ${
-                dir.es_predeterminada ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white hover:border-orange-300'
+                dir.es_principal ? 'border-orange-500 bg-orange-50' : 'border-slate-200 bg-white hover:border-orange-300'
               }`}
             >
-              {dir.es_predeterminada && (
+              {dir.es_principal && (
                 <span className="absolute -top-3 -right-3 bg-orange-500 text-white p-2 rounded-full shadow-md" title="Dirección Predeterminada">
                   <Star className="w-5 h-5 fill-current" />
                 </span>
@@ -156,9 +156,9 @@ export default function MisDirecciones() {
               </div>
 
               <div className="flex items-center gap-2 mt-4 bg-orange-50 p-3 rounded-lg border border-orange-100">
-                <input type="checkbox" id="predet" checked={formData.es_predeterminada} onChange={e => setFormData({...formData, es_predeterminada: e.target.checked})} className="w-5 h-5 text-orange-600 rounded border-orange-300 focus:ring-orange-500" />
-                <label htmlFor="predet" className="text-sm font-medium text-orange-900 cursor-pointer">
-                  Marcar como dirección predeterminada
+                <input type="checkbox" id="principal" checked={formData.es_principal} onChange={e => setFormData({...formData, es_principal: e.target.checked})} className="w-5 h-5 text-orange-600 rounded border-orange-300 focus:ring-orange-500" />
+                <label htmlFor="principal" className="text-sm font-medium text-orange-900 cursor-pointer">
+                  Marcar como dirección principal
                 </label>
               </div>
 

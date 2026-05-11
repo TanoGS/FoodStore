@@ -13,7 +13,7 @@ const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   //  LÓGICA DE ROLES 
-  const canSeeAdminPanel = user?.rol === 'ADMIN' || user?.rol === 'GESTOR_STOCK';
+  const canSeeAdminPanel = user?.rol === 'ADMIN' || user?.rol === 'GESTOR_STOCK' || user?.rol === 'GESTOR_PEDIDOS';
 
   return (
     <>

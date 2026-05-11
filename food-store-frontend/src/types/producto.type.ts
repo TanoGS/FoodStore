@@ -12,4 +12,5 @@ export interface Producto {
   activo: boolean;
   categorias?: Categoria[]; // Relación N:M
   ingredientes?: Ingrediente[];
+ 
 }

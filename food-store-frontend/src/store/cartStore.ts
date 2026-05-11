@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// Definimos la forma del Producto que guardaremos (puedes importarlo de tus types si ya lo tienes)
+
 export interface ProductoCart {
   id: number;
   nombre: string;
   precio_base: number;
   imagen_url?: string | null;
+  categoria: string;
 }
 
 export interface CartItem {

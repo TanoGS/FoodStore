@@ -10,9 +10,9 @@ import IngredientesAdmin from './pages/admin/IngredientesAdmin';
 import PanelUsuarios from './pages/admin/PanelUsuarios';
 import Register from './pages/auth/Register';
 import MisDirecciones from './pages/direcciones/MisDirecciones';
+import GestorPedidos from './pages/admin/GestorPedidos';
 
-// Componente placeholder para el catálogo temporal
-const CatalogoPlaceholder = () => <div className="p-10 text-center text-2xl font-bold">Catálogo en construcción 🚧</div>;
+
 
 export default function App() {
   return (
@@ -35,6 +35,7 @@ export default function App() {
           <Route path="productos" element={<ProductosAdmin />} />
           <Route path="categorias" element={<CategoriasAdmin />} />
           <Route path="ingredientes" element={<IngredientesAdmin />} />
+          <Route path="gestor-pedidos" element={<GestorPedidos />} />
 
           <Route path="usuarios" element={<PanelUsuarios />} />
 
