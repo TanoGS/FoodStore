@@ -86,7 +86,7 @@ export default function Home() {
                     {cat.nombre}
                   </h2>
                   <span className="bg-slate-200 text-slate-600 text-xs font-bold px-3 py-1 rounded-full">
-                    {cat.productos?.length || 0} ítems
+                    {cat.productos?.length || 0} Variedades
                   </span>
                 </div>
 

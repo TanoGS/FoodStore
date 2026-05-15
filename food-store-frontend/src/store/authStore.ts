@@ -1,12 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// Define cómo luce un Usuario en el frontend
+//  Definimos cómo luce un Rol individual
+export interface Role {
+  id: number;
+  nombre: string;
+}
+
+// El usuario ahora tiene un arreglo de roles
 export interface User {
   id: number;
   email: string;
   nombre: string;
-  rol: 'ADMIN' | 'CLIENTE' | 'GESTOR_STOCK' | 'GESTOR_PEDIDOS';
+  roles: Role[]; // Reemplazamos 'rol' por 'roles'
 }
 
 interface AuthState {

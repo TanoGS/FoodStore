@@ -1,5 +1,4 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-// 👇 1. Agregamos ClipboardList a las importaciones
 import { Package, Tags, Carrot, LogOut, LayoutDashboard, Users, ClipboardList } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useEffect } from 'react';
@@ -22,7 +21,7 @@ export default function AdminLayout() {
 
   if (!isAuthenticated) return null;
 
-  // 👇 2. Definimos qué roles pueden ver cada ítem del menú
+  // Definimos qué roles pueden ver cada ítem del menú
   const navItems = [
     { 
       name: 'Dashboard', 
@@ -52,13 +51,13 @@ export default function AdminLayout() {
       name: 'Pedidos', 
       path: '/admin/gestor-pedidos', 
       icon: ClipboardList, 
-      roles: ['ADMIN', 'GESTOR_PEDIDOS'] // 👈 Solo Admin y Gestor de Pedidos
+      roles: ['ADMIN', 'GESTOR_PEDIDOS'] 
     },
     { 
       name: 'Usuarios', 
       path: '/admin/usuarios', 
       icon: Users, 
-      roles: ['ADMIN'] // 👈 Solo el Admin supremo
+      roles: ['ADMIN'] 
     },
   ];
 
@@ -77,8 +76,8 @@ export default function AdminLayout() {
 
         <nav className="flex-1 px-4 space-y-2">
           {navItems
-            // 👇 3. Filtramos dinámicamente según el rol del usuario logueado
-            .filter(item => item.roles.includes(user?.rol || ''))
+            // 👇 1. FILTRO ACTUALIZADO: Comprobamos si alguno de los roles del usuario está en los roles permitidos
+            .filter(item => user?.roles?.some(r => item.roles.includes(r.nombre)))
             .map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -105,7 +104,8 @@ export default function AdminLayout() {
             <div className="overflow-hidden">
               <p className="text-sm font-bold truncate">{user?.nombre || 'Usuario'}</p>
               <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">
-                {user?.rol.replace('_', ' ')}
+                {/* 👇 2. RENDERIZADO DE ROLES ACTUALIZADO */}
+                {user?.roles?.map(r => r.nombre.replace('_', ' ')).join(', ')}
               </p>
             </div>
             <button 

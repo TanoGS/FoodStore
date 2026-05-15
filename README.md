@@ -52,7 +52,7 @@ Configurar y levantar el Backend (FastAPI)
 3. Configura las variables de entorno:
    Crea un archivo \`.env\` en la carpeta del frontend:
    \`\`\`env
-   VITE_API_BASE_URL=http://localhost:8000/api/v1
+   VITE_API_BASE_URL=http://localhost:8000/api
    \`\`\`
 4. Inicia el entorno de desarrollo de Vite:
    \`\`\`bash

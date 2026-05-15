@@ -7,13 +7,14 @@ import CartDrawer from '../layout/CartDrawer';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
-
   const totalItems = useCartStore(state => state.getTotalItems());
-
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  //  LÓGICA DE ROLES 
-  const canSeeAdminPanel = user?.rol === 'ADMIN' || user?.rol === 'GESTOR_STOCK' || user?.rol === 'GESTOR_PEDIDOS';
+
+  // Verificamos si dentro de la lista de roles del usuario existe alguno de estos nombres
+  const canSeeAdminPanel = user?.roles?.some(rol => 
+    ['ADMIN', 'GESTOR_STOCK', 'GESTOR_PEDIDOS'].includes(rol.nombre)
+  );
 
   return (
     <>
@@ -35,7 +36,7 @@ const Navbar = () => {
               <span className="hidden md:block">Mis Direcciones</span>
             </Link>
 
-            {/*  Carrito  */}
+            {/* Carrito  */}
            <button 
                 onClick={() => setIsCartOpen(true)}
                 className="relative text-slate-300 hover:text-orange-400 transition-colors flex items-center"
@@ -67,7 +68,8 @@ const Navbar = () => {
             <div className="flex items-center gap-3 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
               <div className="flex flex-col text-right hidden sm:flex">
                 <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">
-                  {user?.rol.replace('_', ' ')} 
+                  {/* 👇 NUEVO RENDERIZADO DE ROL 👇 Extraemos los nombres y los unimos con una coma si tiene más de uno */}
+                  {user?.roles?.map(r => r.nombre.replace('_', ' ')).join(', ')} 
                 </span>
                 <span className="text-sm font-medium leading-tight">
                   {user?.nombre || user?.email.split('@')[0]}
@@ -87,7 +89,6 @@ const Navbar = () => {
         ) : (
           // --- VISTA CUANDO NO ESTÁ LOGUEADO ---
           <div className="flex items-center gap-4">
-            {/* botón de registro aquí */}
             <Link 
               to="/registro" 
               className="text-sm font-medium text-slate-300 hover:text-white transition-colors hidden sm:block"
@@ -106,10 +107,9 @@ const Navbar = () => {
       </div>
     </nav>
 
-    {/*  panel del carrito (fuera del nav para evitar conflictos de z-index) */}
+    {/* panel del carrito (fuera del nav para evitar conflictos de z-index) */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
-    
   );
 };
 
