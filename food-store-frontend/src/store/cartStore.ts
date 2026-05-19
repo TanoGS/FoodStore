@@ -7,7 +7,9 @@ export interface ProductoCart {
   nombre: string;
   precio_base: number;
   imagen_url?: string | null;
-  categoria: string;
+  categoria_nombre?: string;
+  opciones_seleccionadas?: any[]; 
+  subtotal: number;
 }
 
 export interface CartItem {

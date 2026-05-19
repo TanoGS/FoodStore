@@ -18,21 +18,29 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 1. Llamamos al backend
-      const response = await AuthService.login(email, password);
+      // 1. Llamamos al backend. La respuesta AHORA es el usuario directamente.
+      const usuario = await AuthService.login(email, password);
 
-      // 2. Guardamos en Zustand
-      setLogin(response.access_token, response.user);
+      // 2. Guardamos en Zustand. 
+      // Como ya no hay token manual, le pasamos un string vacío o null al primer parámetro.
+      // (El navegador se encarga de la Cookie automáticamente).
+      setLogin("", usuario); 
 
-      // 3. Redirigimos según el rol
-      if (response.user.rol === 'ADMIN') {
-        navigate('/');
+      // 3. Redirigimos según el rol.
+      // Ahora revisamos si dentro de su lista de roles está el "ADMIN"
+      // Nota: Si tus roles vienen como objetos anidados en lugar de strings, 
+      // podrías necesitar: usuario.roles?.some(r => r.rol_codigo === 'ADMIN')
+      const esAdmin = usuario.roles?.includes('ADMIN') || 
+                      usuario.roles?.some((r: any) => r.rol_codigo === 'ADMIN' || r === 'ADMIN');
+
+      if (esAdmin) {
+        navigate('/'); // Redirige al panel de administrador 
       } else {
-        navigate('/');
+        navigate('/'); // Redirige a la tienda para el cliente normal
       }
+      
     } catch (err: any) {
       console.error(err);
-      // Validamos si es un error del backend (401 o 400)
       if (err.response?.status === 401 || err.response?.status === 400) {
         setError('Credenciales incorrectas. Intenta de nuevo.');
       } else {
@@ -75,6 +83,7 @@ export default function Login() {
             <input
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"

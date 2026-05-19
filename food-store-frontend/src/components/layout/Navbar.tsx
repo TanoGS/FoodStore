@@ -11,9 +11,8 @@ const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
 
-  // Verificamos si dentro de la lista de roles del usuario existe alguno de estos nombres
-  const canSeeAdminPanel = user?.roles?.some(rol => 
-    ['ADMIN', 'GESTOR_STOCK', 'GESTOR_PEDIDOS'].includes(rol.nombre)
+  const canSeeAdminPanel = user?.roles?.some((rol: any) => 
+    ['ADMIN', 'GESTOR_STOCK', 'GESTOR_PEDIDOS'].includes(rol.codigo || rol.rol_codigo)
   );
 
   return (
@@ -68,8 +67,7 @@ const Navbar = () => {
             <div className="flex items-center gap-3 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
               <div className="flex flex-col text-right hidden sm:flex">
                 <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">
-                  {/* 👇 NUEVO RENDERIZADO DE ROL 👇 Extraemos los nombres y los unimos con una coma si tiene más de uno */}
-                  {user?.roles?.map(r => r.nombre.replace('_', ' ')).join(', ')} 
+                  {user?.roles?.map((r: any) => r.nombre).join(', ')}
                 </span>
                 <span className="text-sm font-medium leading-tight">
                   {user?.nombre || user?.email.split('@')[0]}

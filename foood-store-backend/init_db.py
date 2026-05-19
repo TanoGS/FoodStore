@@ -1,59 +1,59 @@
-from sqlmodel import Session, SQLModel, select
-from core.database import engine
-from app.modules.usuario.models import Usuario, Rol, UsuarioRol, DireccionEntrega
+from sqlmodel import Session, SQLModel
+from core.database import engine  # Verifica que apunte correctamente a tu archivo de conexión
+from app.modules.usuario.models import Usuario, Rol, UsuarioRol
 from core.security import get_password_hash
+from datetime import datetime
 
-def init_db():
-    # 1. Borramos todo y creamos las tablas desde cero
-    print("OJO: Borrando y creando tablas...")
+from app.modules.catalogo.models import Categoria, CategoriaIngrediente, Ingrediente, Producto, ProductoCategoria, ProductoIngrediente
+
+def inicializar_sistema():
+    print("⏳ Detectando modelos y recreando la estructura completa de la BD...")
+    # Borra todas las tablas existentes para evitar conflictos de columnas viejas
     SQLModel.metadata.drop_all(engine)
+    # Crea el nuevo esquema estructurado con tipos BIGINT, VARCHAR(20) y TIMESTAMPTZ
     SQLModel.metadata.create_all(engine)
 
     with Session(engine) as session:
-        # 2. CREACIÓN DE ROLES BASE
-        print("Sembrando roles...")
-        rol_admin = Rol(nombre="ADMIN", descripcion="Acceso total al sistema")
-        rol_cliente = Rol(nombre="CLIENTE", descripcion="Usuario final")
-        rol_stock = Rol(nombre="GESTOR_STOCK", descripcion="Gestiona catálogo e inventario")
-        rol_pedidos = Rol(nombre="GESTOR_PEDIDOS", descripcion="Gestiona el ciclo de pedidos")
+        print("🌱 Sembrando catálogo maestro de Roles con Claves Naturales...")
+        roles_maestros = [
+            Rol(codigo="ADMIN", nombre="Administrador", descripcion="Control total y auditoría global del sistema"),
+            Rol(codigo="CLIENTE", nombre="Cliente Tienda", descripcion="Usuario final consumidor del catálogo"),
+            Rol(codigo="GESTOR_STOCK", nombre="Gestor de Stock", descripcion="Administrador del inventario e ingredientes"),
+            Rol(codigo="GESTOR_PEDIDOS", nombre="Gestor de Pedidos", descripcion="Operador encargado de la máquina de estados de las órdenes"),
+        ]
         
-        session.add_all([rol_admin, rol_cliente, rol_stock, rol_pedidos])
-        session.commit()
-        
-        # Refrescamos para obtener los IDs
-        session.refresh(rol_admin)
-        session.refresh(rol_cliente)
+        for rol in roles_maestros:
+            session.add(rol)
+        session.commit() # Guardamos los roles primero para que existan las FKs
 
-        # 3. CREACIÓN DE USUARIO ADMINISTRADOR INICIAL
-        print("Creando usuario administrador de prueba...")
+        print("👤 Registrando Super Usuario Administrador inicial...")
         admin_user = Usuario(
             email="admin@foodstore.com",
-            password=get_password_hash("admin123"), # Usa tu función de hasheo
             nombre="Admin",
-            apellido="Principal",
-            activo=True
+            apellido="FoodStore",
+            cel="2615551234", # Probando nuestra nueva variable requerida
+            password=get_password_hash("admin123"),
+            activo=True,
+            creado_en=datetime.utcnow()
         )
-        # Asociamos el rol ADMIN al usuario (Muchos a Muchos)
-        admin_user.roles.append(rol_admin)
-        
         session.add(admin_user)
-        session.commit()
-        session.refresh(admin_user)
+        session.flush() # Ejecuta en Postgres para generar el ID sin cerrar la transacción
 
-        # 4. CREACIÓN DE DIRECCIÓN DE PRUEBA
-        print("Agregando dirección de entrega...")
-        direccion = DireccionEntrega(
-            calle="Av. Siempre Viva",
-            numero="742",
-            localidad="Mendoza",
-            es_principal=True,
-            usuario_id=admin_user.id
+        print("🔗 Vinculando credenciales de acceso (Usuario <-> Rol)...")
+        # Creamos el registro en la tabla asociativa usuarios_roles usando el rol_codigo de texto
+        enlace_rol = UsuarioRol(
+            usuario_id=admin_user.id,
+            rol_codigo="ADMIN",
+            asignado_por_id=admin_user.id, # El mismo admin inicial firma su alta de manera auto-referencial
+            expires_at=None # Rol permanente
         )
-        
-        session.add(direccion)
+        session.add(enlace_rol)
         session.commit()
-
-    print("¡Base de Datos inicializada con éxito! 🚀")
+        
+    print("\n=======================================================================")
+    print("¡Base de Datos FoodStore inicializada con éxito bajo el nuevo esquema ERD! 🚀")
+    print("Usuario Admin: admin@foodstore.com | Clave: admin123")
+    print("=======================================================================")
 
 if __name__ == "__main__":
-    init_db()
+    inicializar_sistema()

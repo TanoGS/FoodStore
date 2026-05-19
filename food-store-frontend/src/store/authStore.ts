@@ -12,7 +12,8 @@ export interface User {
   id: number;
   email: string;
   nombre: string;
-  roles: Role[]; // Reemplazamos 'rol' por 'roles'
+  cel?: string;
+  roles?: any[];
 }
 
 interface AuthState {

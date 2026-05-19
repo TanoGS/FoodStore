@@ -1,54 +1,86 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from typing import List, Optional
 from datetime import datetime
 
-# 1. Molde para mostrar los roles del usuario
+# ==============================================================================
+# 1. ESQUEMA: RolPublic (Molde para exponer la Clave Natural)
+# ==============================================================================
 class RolPublic(BaseModel):
-    id: int
-    nombre: str
+    codigo: str  # Ej: "ADMIN", "GESTOR_STOCK"
+    nombre: str  # Ej: "Administrador General"
+    descripcion: Optional[str] = None
 
     class Config:
         from_attributes = True
 
-# 2. Base del usuario
+
+# ==============================================================================
+# 2. ESQUEMAS: Usuario (Estructura de Datos e Inputs)
+# ==============================================================================
 class UsuarioBase(BaseModel):
     email: EmailStr
     nombre: str
     apellido: str
+    cel: Optional[str] = None  
 
-# 3. Datos necesarios para registrarse
+
 class UsuarioCreate(UsuarioBase):
     password: str
-    # Nota: No pedimos el rol aquí. El servicio le asignará "CLIENTE" por defecto.
+    # Cambiamos IDs numéricos por la Clave Natural de tipo texto (Códigos)
+    role_codigos: Optional[List[str]] = None  # Ej: ["GESTOR_STOCK"]
 
-# 4. Datos que devolvemos al frontend (SIN la contraseña)
-class UsuarioPublic(UsuarioBase):
-    id: int
-    activo: bool
-    creado_en: datetime
-    # 👇 EL CAMBIO CLAVE: Ahora devolvemos una lista de roles
-    roles: List[RolPublic] = []
-
-    class Config:
-        from_attributes = True
-
-class UsuarioList(BaseModel):
-    data: List[UsuarioPublic]
-    total: int
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    user: UsuarioPublic
 
 class UsuarioUpdate(BaseModel):
     nombre: Optional[str] = None
     apellido: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    cel: Optional[str] = None  
     activo: Optional[bool] = None
 
-class UsuarioCreate(UsuarioBase):
-    password: str
-    #  Agregamos esto para poder pasar IDs de roles al crear
-    role_ids: Optional[List[int]] = None
+
+class UsuarioPublic(UsuarioBase):
+    id: int
+    activo: bool
+    creado_en: datetime
+    actualizado_en: Optional[datetime] = None  
+    roles: List[RolPublic] = []
+
+    class Config:
+        from_attributes = True
+
+    #  EL INTERCEPTOR MAGNÍFICO (Model Validator) 
+    @model_validator(mode="before")
+    @classmethod
+    def aplanar_roles_enlaces(cls, data):
+        """
+        Como la relación Muchos a Muchos ahora es explícita mediante 'roles_enlaces',
+        al hacer UsuarioPublic.model_validate(usuario_orm), este validador entra en juego
+        antes de serializar, extrae los objetos de la tabla Rol y los inserta limpios
+        en el arreglo 'roles' para que el frontend los consuma de forma transparente.
+        """
+        if hasattr(data, "roles_enlaces"):
+            # Extraemos la entidad máter 'rol' desde cada elemento de la tabla asociativa
+            roles_reales = [enlace.rol for enlace in data.roles_enlaces if enlace.rol]
+            
+            # Re-empaquetamos la información como un diccionario compatible con Pydantic
+            return {
+                "id": data.id,
+                "email": data.email,
+                "nombre": data.nombre,
+                "apellido": data.apellido,
+                "cel": data.cel,
+                "activo": data.activo,
+                "creado_en": data.creado_en,
+                "actualizado_en": data.actualizado_en,
+                "roles": roles_reales
+            }
+        return data
+
+
+# ==============================================================================
+# 3. ESQUEMAS: Respuestas de Colecciones
+# ==============================================================================
+class UsuarioList(BaseModel):
+    data: List[UsuarioPublic]
+    total: int

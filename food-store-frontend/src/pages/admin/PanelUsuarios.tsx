@@ -14,7 +14,6 @@ export default function PanelUsuarios() {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [modalAbierto, setModalAbierto] = useState(false);
   
-  // 👇 ACTUALIZADO: Cambiamos 'rol' por 'role_ids' como un arreglo
   const [formData, setFormData] = useState({
     email: '', 
     nombre: '', 
@@ -26,7 +25,10 @@ export default function PanelUsuarios() {
   const cargarUsuarios = async () => {
     try {
       const res = await UsuarioService.listar();
-      setUsuarios(res.data);
+      // 👇 CORRECCIÓN 1: Si 'res' ya es el arreglo, usamos 'res'. Si viene anidado en Axios, usamos 'res.data'
+      const dataLimpia = res.data || res;
+      // Nos aseguramos de que siempre sea un arreglo para que el .map() de abajo nunca explote
+      setUsuarios(Array.isArray(dataLimpia) ? dataLimpia : []); 
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
     }
@@ -39,7 +41,6 @@ export default function PanelUsuarios() {
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Ahora enviamos el formData que ya contiene 'role_ids'
       await UsuarioService.crear(formData);
       alert("Usuario creado con éxito");
       setModalAbierto(false);
@@ -88,12 +89,15 @@ export default function PanelUsuarios() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
-                    {/* 👇 ACTUALIZADO: Ahora recorremos la lista de roles */}
-                    {u.roles?.map((r: any) => (
-                      <span key={r.id} className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-black rounded-full uppercase">
-                        {r.nombre.replace('_', ' ')}
-                      </span>
-                    ))}
+                    {/* 👇 CORRECCIÓN 2: Leemos roles_enlaces y la propiedad rol_codigo */}
+                    {(u.roles_enlaces || u.roles || []).map((r: any, idx: number) => {
+                      const nombreDelRol = r.rol_codigo || r.nombre || 'DESCONOCIDO';
+                      return (
+                        <span key={idx} className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-black rounded-full uppercase">
+                          {nombreDelRol.replace('_', ' ')}
+                        </span>
+                      );
+                    })}
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -109,46 +113,52 @@ export default function PanelUsuarios() {
                 </td>
               </tr>
             ))}
+            {usuarios.length === 0 && (
+              <tr>
+                <td colSpan={4} className="p-8 text-center text-slate-500">
+                  No se encontraron usuarios o cargando...
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* MODAL ACTUALIZADO */}
+      {/* MODAL */}
       {modalAbierto && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-black">Crear Nuevo Usuario</h2>
-              <button onClick={() => setModalAbierto(false)}><X /></button>
+              <button onClick={() => setModalAbierto(false)} className="hover:text-red-400 transition-colors"><X /></button>
             </div>
             
             <form onSubmit={handleCrear} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Nombre</label>
-                  <input required value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full p-2 border rounded" />
+                  <label className="block text-sm font-medium mb-1 text-slate-700">Nombre</label>
+                  <input required value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-orange-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Apellido</label>
-                  <input required value={formData.apellido} onChange={e => setFormData({...formData, apellido: e.target.value})} className="w-full p-2 border rounded" />
+                  <label className="block text-sm font-medium mb-1 text-slate-700">Apellido</label>
+                  <input required value={formData.apellido} onChange={e => setFormData({...formData, apellido: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-orange-500" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-2 border rounded" />
+                <label className="block text-sm font-medium mb-1 text-slate-700">Email</label>
+                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-orange-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Contraseña</label>
-                <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full p-2 border rounded" />
+                <label className="block text-sm font-medium mb-1 text-slate-700">Contraseña</label>
+                <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-orange-500" />
               </div>
               
-              {/* 👇 SELECT ACTUALIZADO PARA ROLE_IDS 👇 */}
               <div>
-                <label className="block text-sm font-medium mb-1">Rol Principal</label>
+                <label className="block text-sm font-medium mb-1 text-slate-700">Rol Principal</label>
                 <select 
                   value={Object.keys(ROLE_MAP).find(key => ROLE_MAP[key] === formData.role_ids[0])} 
                   onChange={e => setFormData({...formData, role_ids: [ROLE_MAP[e.target.value]]})} 
-                  className="w-full p-2 border rounded bg-white"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl bg-white outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="CLIENTE">Cliente</option>
                   <option value="GESTOR_STOCK">Gestor de Stock</option>
@@ -158,8 +168,8 @@ export default function PanelUsuarios() {
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setModalAbierto(false)} className="px-4 py-2 text-gray-600">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded-xl font-bold">Crear Cuenta</button>
+                <button type="button" onClick={() => setModalAbierto(false)} className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-50 rounded-xl transition-colors">Cancelar</button>
+                <button type="submit" className="px-5 py-2.5 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-lg shadow-orange-600/20">Crear Cuenta</button>
               </div>
             </form>
           </div>

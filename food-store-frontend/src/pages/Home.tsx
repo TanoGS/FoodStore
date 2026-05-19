@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Plus, Utensils } from 'lucide-react';
-import { CategoriaService } from '../services/categoria.service'; // Asegúrate de importar tu servicio
+import { CatalogoService } from '../services/catalogo.service'; 
 import { useCartStore } from '../store/cartStore';
 
 interface Producto {
   id: number;
   nombre: string;
   descripcion?: string;
-  precio_base: number;
+  precio: number; 
   imagen_url?: string | null;
+  categorias?: any[];
+  activo?: boolean;
 }
 
 interface Categoria {
@@ -25,8 +27,23 @@ export default function Home() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const data = await CategoriaService.listarConProductos();
-        setCategorias(data);
+       
+        const [cats, prods] = await Promise.all([
+          CatalogoService.getCategorias(),
+          CatalogoService.getProductos()
+        ]);
+
+        // Agrupamos los productos activos dentro de sus respectivas categorías
+        const menuAgrupado = cats.map((cat: any) => {
+          return {
+            ...cat,
+            productos: prods.filter((p: Producto) => 
+              p.activo && p.categorias?.some((c: any) => c.id === cat.id)
+            )
+          };
+        }).filter((cat: Categoria) => cat.productos && cat.productos.length > 0);
+
+        setCategorias(menuAgrupado);
       } catch (error) {
         console.error("Error al cargar el menú:", error);
       } finally {
@@ -41,67 +58,64 @@ export default function Home() {
     addItem({
       id: producto.id,
       nombre: producto.nombre,
-      precio_base: producto.precio_base,
-      imagen_url: producto.imagen_url,
-      categoria: categoriaNombre 
+      precio_base: producto.precio, 
+      imagen_url: producto.imagen_url || null,
+      categoria_nombre: categoriaNombre,
+      opciones_seleccionadas: [], 
+      subtotal: producto.precio
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Banner Principal */}
-      <div className="bg-slate-900 text-white py-8 px-4 text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
-          Nuestro Menú 🍕
-        </h1>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-          Explora nuestras especialidades preparadas al momento.
-        </p>
+    <div className="min-h-screen bg-slate-50">
+      
+      {/* HERO SECTION */}
+      <div className="bg-slate-900 text-white py-20 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
+            El sabor que te <span className="text-orange-500">apasiona</span>,<br/>
+            directo a tu puerta.
+          </h1>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-8">
+            Descubre nuestro menú renovado con los mejores ingredientes y calidad premium.
+          </p>
+        </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6">
-        {categorias.length === 0 ? (
-          <div className="text-center py-20">
+      {/* MENÚ SECTION */}
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4"></div>
+            <p className="text-slate-500 font-medium">Preparando la cocina...</p>
+          </div>
+        ) : categorias.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm">
             <ShoppingBag className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-700">No hay productos disponibles</h2>
+            <h3 className="text-xl font-bold text-slate-700">El menú está vacío</h3>
+            <p className="text-slate-500">Aún no hay productos disponibles para mostrar.</p>
           </div>
         ) : (
           <div className="space-y-16">
             {categorias.map((cat) => (
               <section key={cat.id}>
-                {/* Título de la Categoría */}
-                <div className="flex items-center gap-4 mb-8 border-b border-slate-200 pb-4">
-                  <div className="bg-orange-100 p-2 rounded-xl text-orange-600">
-                    <Utensils className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight">
-                    {cat.nombre}
-                  </h2>
-                  <span className="bg-slate-200 text-slate-600 text-xs font-bold px-3 py-1 rounded-full">
-                    {cat.productos?.length || 0} Variedades
-                  </span>
-                </div>
-
-                {/* Grilla de Productos */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                  {cat.productos?.map((producto: Producto) => (
-                    <div key={producto.id} className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col">
-                      <div className="h-48 overflow-hidden relative">
-                        <img 
-                          src={producto.imagen_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500"} 
+                <h2 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                  <Utensils className="w-6 h-6 text-orange-600" />
+                  {cat.nombre}
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {cat.productos?.map((producto) => (
+                    <div key={producto.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition-all group flex flex-col">
+                      
+                      <div className="relative h-48 bg-slate-100 overflow-hidden">
+                        <img
+                          src={producto.imagen_url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80'}
                           alt={producto.nombre}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full font-black text-slate-900 shadow-sm">
-                          ${producto.precio_base}
+                          ${producto.precio}
                         </div>
                       </div>
                       
