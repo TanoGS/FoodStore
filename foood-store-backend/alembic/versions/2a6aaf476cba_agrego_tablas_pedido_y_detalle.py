@@ -41,10 +41,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['producto_id'], ['producto.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.drop_column('categoria', 'orden_display')
-    op.alter_column('ingrediente', 'cantidad',
-               existing_type=sa.INTEGER(),
-               nullable=False)
+    
+           
     # ### end Alembic commands ###
 
 
@@ -54,7 +52,5 @@ def downgrade() -> None:
     op.alter_column('ingrediente', 'cantidad',
                existing_type=sa.INTEGER(),
                nullable=True)
-    op.add_column('categoria', sa.Column('orden_display', sa.VARCHAR(length=255), autoincrement=False, nullable=True))
-    op.drop_table('detallepedido')
-    op.drop_table('pedido')
+   
     # ### end Alembic commands ###
