@@ -1,46 +1,44 @@
-from sqlmodel import Session, select
+from sqlalchemy import text
+from passlib.context import CryptContext
 from core.database import engine
-from app.modules.usuarios.models import Rol, Usuario
+
+_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+EMAIL_ADMIN = "admin@foodstore.com"
+PASSWORD_ADMIN = "admin123"
+
 
 def inicializar_datos():
-    with Session(engine) as db:
-        # 1. Buscar o crear el rol ADMIN
-        rol_admin = db.exec(select(Rol).where(Rol.nombre == "ADMIN")).first()
-        if not rol_admin:
-            rol_admin = Rol(nombre="ADMIN", descripcion="Administrador total del sistema")
-            db.add(rol_admin)
-            db.commit()
-            db.refresh(rol_admin)
-            print("✅ Rol ADMIN creado.")
+    with engine.connect() as conn:
+        # Verificar si el admin ya existe
+        result = conn.execute(
+            text("SELECT id FROM usuario WHERE email = :email"),
+            {"email": EMAIL_ADMIN},
+        ).fetchone()
 
-        # 2. Buscar o crear el rol CLIENTE (por las dudas)
-        rol_cliente = db.exec(select(Rol).where(Rol.nombre == "CLIENTE")).first()
-        if not rol_cliente:
-            rol_cliente = Rol(nombre="CLIENTE", descripcion="Usuario regular")
-            db.add(rol_cliente)
-            db.commit()
-            print("✅ Rol CLIENTE creado.")
-
-        # 3. Crear el usuario Administrador
-        email_admin = "admin@foodstore.com"
-        usuario_admin = db.exec(select(Usuario).where(Usuario.email == email_admin)).first()
-        
-        if not usuario_admin:
-            nuevo_admin = Usuario(
-                nombre="Super",
-                apellido="Admin",
-                email=email_admin,
-                password_hash="123", # Contraseña en texto plano temporalmente
-                telefono="0000000000",
-                rol_id=rol_admin.id
-            )
-            db.add(nuevo_admin)
-            db.commit()
-            print(f"✅ Usuario Admin creado exitosamente!")
-            print(f"   -> Email: {email_admin}")
-            print(f"   -> Password: 123")
+        if result:
+            print("⚠️  El usuario Admin ya existía en la base de datos.")
         else:
-            print("⚠️ El usuario Admin ya existía en la base de datos.")
+            hashed = _pwd.hash(PASSWORD_ADMIN)
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO usuario (email, password, nombre, apellido, activo, rol, creado_en)
+                    VALUES (:email, :password, :nombre, :apellido, true, 'ADMIN', NOW())
+                    """
+                ),
+                {
+                    "email": EMAIL_ADMIN,
+                    "password": hashed,
+                    "nombre": "Super",
+                    "apellido": "Admin",
+                },
+            )
+            conn.commit()
+            print("✅ Usuario Admin creado exitosamente!")
+            print(f"   -> Email:    {EMAIL_ADMIN}")
+            print(f"   -> Password: {PASSWORD_ADMIN}")
+
 
 if __name__ == "__main__":
     print("Iniciando la carga de datos (Seed)...")

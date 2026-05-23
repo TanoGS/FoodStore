@@ -15,7 +15,6 @@ export default function IngredienteModal({ ingrediente, onClose, onSave }: Ingre
   const [unidadMedida, setUnidadMedida] = useState('UNIDAD');
   const [costoUnitario, setCostoUnitario] = useState<number | ''>('');
   const [esAlergeno, setEsAlergeno] = useState(false);
-  const [categoriaId, setCategoriaId] = useState<number | ''>('');
 
   useEffect(() => {
     if (ingrediente) {
@@ -25,7 +24,6 @@ export default function IngredienteModal({ ingrediente, onClose, onSave }: Ingre
       setUnidadMedida(ingrediente.unidad_medida || 'UNIDAD');
       setCostoUnitario(ingrediente.costo_unitario ?? '');
       setEsAlergeno(ingrediente.es_alergeno || false);
-      setCategoriaId(ingrediente.categoria_ingrediente_id ?? '');
     }
   }, [ingrediente]);
 
@@ -38,7 +36,6 @@ export default function IngredienteModal({ ingrediente, onClose, onSave }: Ingre
       unidad_medida: unidadMedida,
       costo_unitario: Number(costoUnitario),
       es_alergeno: esAlergeno,
-      categoria_ingrediente_id: Number(categoriaId)
     });
   };
 
@@ -57,9 +54,9 @@ export default function IngredienteModal({ ingrediente, onClose, onSave }: Ingre
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           
-          {/* Fila 1: Nombre y Grupo */}
+          {/* Fila 1: Nombre */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 sm:col-span-1">
+            <div className="col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre *</label>
               <input
                 type="text"
@@ -68,17 +65,6 @@ export default function IngredienteModal({ ingrediente, onClose, onSave }: Ingre
                 onChange={(e) => setNombre(e.target.value)}
                 className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 outline-none"
                 placeholder="Ej: Carne Picada"
-              />
-            </div>
-            <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">ID Grupo Depósito *</label>
-              <input
-                type="number"
-                required
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 outline-none"
-                placeholder="Ej: 1"
               />
             </div>
           </div>

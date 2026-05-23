@@ -32,11 +32,6 @@ export const CatalogoService = {
     const { data } = await api.patch(`/catalogo/ingredientes/${id}`, payload);
     return data;
   },
-  async crearCategoriaIngrediente(nombre: string) {
-    // Si necesitas crear grupos en el depósito como "Carnes", "Verduras"
-    const { data } = await api.post('/catalogo/categorias-ingredientes', { nombre });
-    return data;
-  },
 
   // ==========================================
   // PRODUCTOS (RECETAS Y ESCANDALLO)

@@ -4,7 +4,10 @@ from app.modules.usuario.models import Usuario, Rol, UsuarioRol
 from core.security import get_password_hash
 from datetime import datetime
 
-from app.modules.catalogo.models import Categoria, CategoriaIngrediente, Ingrediente, Producto, ProductoCategoria, ProductoIngrediente
+from app.modules.catalogo.categoria.models import Categoria
+from app.modules.catalogo.ingrediente.models import Ingrediente
+from app.modules.catalogo.producto.models import Producto
+from app.modules.catalogo.shared_models import ProductoCategoria, ProductoIngrediente
 
 def inicializar_sistema():
     print("⏳ Detectando modelos y recreando la estructura completa de la BD...")

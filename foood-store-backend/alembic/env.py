@@ -13,6 +13,11 @@ from sqlmodel import SQLModel
 # Modelos Catálogo de Productos
 from core.config import settings
 
+# Modelos Catálogo de Productos (sub-módulos feature-first)
+from app.modules.catalogo.shared_models import ProductoCategoria, ProductoIngrediente  # noqa: F401
+from app.modules.catalogo.categoria.models import Categoria  # noqa: F401
+from app.modules.catalogo.ingrediente.models import Ingrediente  # noqa: F401
+from app.modules.catalogo.producto.models import Producto  # noqa: F401
 from app.modules.pedido.models import Pedido, DetallePedido
 from app.modules.direccion.models import DireccionEntrega
 # Modelos Identidad y Acceso

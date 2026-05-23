@@ -5,7 +5,7 @@ class DireccionEntrega(SQLModel, table=True):
     __tablename__ = "direccion_entrega"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    usuario_id: int = Field(foreign_key="usuario.id")
+    usuario_id: int = Field(foreign_key="usuarios.id")
     
     calle: str = Field(max_length=100)
     numero: str = Field(max_length=10)

@@ -2,9 +2,10 @@ from sqlmodel import Session, select
 from core.database import engine
 
 # Importamos nuestros modelos del Dominio 2
-from app.modules.categoria.models import Categoria
-from app.modules.ingrediente.models import Ingrediente
-from app.modules.producto.models import Producto, ProductoCategoria, ProductoIngrediente
+from app.modules.catalogo.categoria.models import Categoria
+from app.modules.catalogo.ingrediente.models import Ingrediente
+from app.modules.catalogo.producto.models import Producto
+from app.modules.catalogo.shared_models import ProductoCategoria, ProductoIngrediente
 
 def sembrar_catalogo():
     with Session(engine) as db:
