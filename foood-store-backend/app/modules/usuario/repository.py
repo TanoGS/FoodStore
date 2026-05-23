@@ -1,6 +1,6 @@
-import datetime
-from sqlmodel import Session, select
-from sqlalchemy.orm import selectinload # 👈 NUEVO: Para carga anticipada eficiente
+from sqlmodel import Session, select, func
+from sqlalchemy.orm import selectinload
+from datetime import datetime, timezone
 from core.repository import BaseRepository
 from .models import Usuario, UsuarioRol
 from typing import Optional
@@ -10,7 +10,6 @@ class UsuarioRepository(BaseRepository[Usuario]):
         super().__init__(session, Usuario)
 
     def get_by_email(self, email: str) -> Optional[Usuario]:
-        # 👇 ACTUALIZADO: Trae el usuario, sus enlaces intermedios y el objeto Rol final en un solo viaje limpio a la BD
         statement = (
             select(Usuario)
             .where(Usuario.email == email, Usuario.eliminado_en == None)
@@ -33,9 +32,9 @@ class UsuarioRepository(BaseRepository[Usuario]):
         return list(self.session.exec(statement).all())
 
     def count_activos(self) -> int:
-        return len(self.session.exec(
-            select(Usuario).where(Usuario.eliminado_en == None)
-        ).all())
+        # CORREGIDO: Conteo optimizado directamente en el motor SQL
+        statement = select(func.count(Usuario.id)).where(Usuario.eliminado_en == None)
+        return self.session.exec(statement).one()
     
     def get_all_incluyendo_eliminados(self, offset: int = 0, limit: int = 20) -> list[Usuario]:
         statement = (
@@ -49,9 +48,11 @@ class UsuarioRepository(BaseRepository[Usuario]):
         return list(self.session.exec(statement).all())
 
     def count_total(self) -> int:
-        return len(self.session.exec(select(Usuario)).all())
+        # CORREGIDO: Conteo optimizado directamente en el motor SQL
+        statement = select(func.count(Usuario.id))
+        return self.session.exec(statement).one()
     
     def eliminar_usuario(self, usuario: Usuario):
-        usuario.eliminado_en = datetime.datetime.utcnow()
+        usuario.eliminado_en = datetime.now(timezone.utc)
         usuario.activo = False 
         self.session.add(usuario)

@@ -1,13 +1,13 @@
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, model_validator, Field
 from typing import List, Optional
 from datetime import datetime
 
 # ==============================================================================
-# 1. ESQUEMA: RolPublic (Molde para exponer la Clave Natural)
+# 1. ESQUEMA: RolPublic
 # ==============================================================================
 class RolPublic(BaseModel):
-    codigo: str  # Ej: "ADMIN", "GESTOR_STOCK"
-    nombre: str  # Ej: "Administrador General"
+    codigo: str  
+    nombre: str  
     descripcion: Optional[str] = None
 
     class Config:
@@ -19,23 +19,23 @@ class RolPublic(BaseModel):
 # ==============================================================================
 class UsuarioBase(BaseModel):
     email: EmailStr
-    nombre: str
-    apellido: str
-    cel: Optional[str] = None  
+    nombre: str = Field(..., max_length=50)
+    apellido: str = Field(..., max_length=50)
+    cel: Optional[str] = Field(default=None, max_length=20)
 
 
 class UsuarioCreate(UsuarioBase):
-    password: str
-    # Cambiamos IDs numéricos por la Clave Natural de tipo texto (Códigos)
-    role_codigos: Optional[List[str]] = None  # Ej: ["GESTOR_STOCK"]
+    password: str = Field(..., min_length=8)
+    # Lista de códigos de roles a asignar (Ej: ["GESTOR_STOCK"])
+    role_codigos: Optional[List[str]] = None  
 
 
 class UsuarioUpdate(BaseModel):
-    nombre: Optional[str] = None
-    apellido: Optional[str] = None
+    nombre: Optional[str] = Field(default=None, max_length=50)
+    apellido: Optional[str] = Field(default=None, max_length=50)
     email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    cel: Optional[str] = None  
+    password: Optional[str] = Field(default=None, min_length=8)
+    cel: Optional[str] = Field(default=None, max_length=20)
     activo: Optional[bool] = None
 
 
@@ -49,21 +49,17 @@ class UsuarioPublic(UsuarioBase):
     class Config:
         from_attributes = True
 
-    #  EL INTERCEPTOR MAGNÍFICO (Model Validator) 
     @model_validator(mode="before")
     @classmethod
     def aplanar_roles_enlaces(cls, data):
         """
-        Como la relación Muchos a Muchos ahora es explícita mediante 'roles_enlaces',
-        al hacer UsuarioPublic.model_validate(usuario_orm), este validador entra en juego
-        antes de serializar, extrae los objetos de la tabla Rol y los inserta limpios
-        en el arreglo 'roles' para que el frontend los consuma de forma transparente.
+        Intercepta la instancia del modelo SQLAlchemy antes de que Pydantic la procese.
+        Extrae la entidad Rol pura desde la tabla asociativa UsuarioRol.
         """
+        # Verificamos si data es un objeto SQLAlchemy (tiene el atributo) o un diccionario
         if hasattr(data, "roles_enlaces"):
-            # Extraemos la entidad máter 'rol' desde cada elemento de la tabla asociativa
             roles_reales = [enlace.rol for enlace in data.roles_enlaces if enlace.rol]
             
-            # Re-empaquetamos la información como un diccionario compatible con Pydantic
             return {
                 "id": data.id,
                 "email": data.email,

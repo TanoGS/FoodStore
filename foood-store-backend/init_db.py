@@ -31,7 +31,7 @@ def inicializar_sistema():
             email="admin@foodstore.com",
             nombre="Admin",
             apellido="FoodStore",
-            cel="2615551234", # Probando nuestra nueva variable requerida
+            cel="2615551234", 
             password=get_password_hash("admin123"),
             activo=True,
             creado_en=datetime.utcnow()

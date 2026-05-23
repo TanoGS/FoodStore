@@ -1,0 +1,42 @@
+Informe de Funcionamiento: Módulo de Usuarios API Food Store
+El módulo ha sido diseñado bajo una arquitectura Feature-First (agrupando por funcionalidad) y estructurado en capas bien definidas. Cada archivo tiene una responsabilidad única, lo que facilita el mantenimiento y las futuras expansiones.
+
+1. Capa de Datos y Validación (models.py y schemas.py)
+Esta capa es el corazón de la estructura de la información. Define cómo se guardan los datos en la base de datos y cómo viajan hacia el cliente.
+
+Modelos (SQLModel): Utilizamos SQLModel para definir las tablas en PostgreSQL. Implementamos relaciones explícitas (como UsuarioRol) usando claves naturales (códigos de texto en lugar de IDs numéricos para los roles).
+
+Auditoría y Timezones: Todos los registros (usuarios y direcciones) ahora estampan automáticamente su fecha de creación y actualización utilizando datetime.now(timezone.utc). Esto asegura que el servidor no tenga problemas de desfase horario si se despliega en otra región.
+
+Esquemas (Pydantic v2): Creamos moldes estrictos de entrada y salida (UsuarioCreate, UsuarioPublic). La gran ventaja aquí es la seguridad por diseño: el hash de la contraseña jamás se incluye en el esquema UsuarioPublic, por lo que es imposible que se filtre accidentalmente en una respuesta HTTP.
+
+Interceptores Inteligentes: Usamos @model_validator en Pydantic para "aplanar" la relación entre el usuario y sus roles, entregando al frontend una lista limpia de roles sin exponer la complejidad de la tabla intermedia.
+
+2. Capa de Acceso a Datos (repository.py)
+El repositorio actúa como el único intermediario autorizado para hablar con la base de datos (PostgreSQL).
+
+Rendimiento (N+1 resuelto): En lugar de hacer una consulta a la base de datos por el usuario, y luego otra consulta adicional por cada rol que tenga, implementamos selectinload. Esto hace una "carga anticipada" (Eager Loading), trayendo toda la información agrupada en un solo viaje limpio a la base de datos.
+
+Conteos Optimizados: Modificamos las funciones de conteo para utilizar func.count(). Ahora, en lugar de descargar miles de registros a la memoria de Python para contarlos, le pedimos al motor SQL que haga el cálculo internamente y solo nos devuelva el número final.
+
+3. Orquestación y Transacciones (unit_of_work.py y service.py)
+Aquí es donde reside la "inteligencia" y las reglas de negocio de la aplicación.
+
+Patrón Unit of Work (UoW): Garantiza la integridad de las transacciones (ACID). El servicio no guarda los cambios directamente; los acumula en la sesión. Si ocurre un error a mitad de camino (ej. el rol no existe), el UoW revierte todo automáticamente (rollback), evitando que queden datos corruptos en la base de datos.
+
+Borrado Lógico (Soft Delete): Cuando un administrador elimina a un usuario, no usamos un DELETE de SQL. En su lugar, el servicio estampa la fecha actual en el campo eliminado_en y cambia el estado activo a False. Esto preserva el historial de compras y registros asociados a ese usuario.
+
+Criptografía: El servicio garantiza que cualquier contraseña entrante pase por la función de hash (usando bcrypt) antes de ser insertada en la base de datos.
+
+4. Capa de Presentación y Seguridad (router.py y security.py)
+El enrutador expone los "endpoints" y hace de guardia de seguridad.
+
+Autenticación Stateless Segura: Al hacer login, el sistema genera un token JWT firmado. Para evitar ataques de robo de tokens mediante scripts maliciosos en el frontend (Cross-Site Scripting - XSS), el token no se devuelve como texto plano, sino que se inyecta directamente en una Cookie HttpOnly. El navegador del usuario almacena y envía esta cookie automáticamente, pero el código JavaScript no puede leerla.
+
+Control de Acceso Basado en Roles (RBAC): Implementamos un sistema de dependencias estricto en el enrutador:
+
+Rutas Públicas: /registro y /login están abiertas a cualquier usuario.
+
+Rutas Protegidas Estándar: Endpoints como /me (para ver y actualizar el perfil propio) requieren que el usuario tenga una cookie de sesión válida.
+
+Rutas Administrativas: Los endpoints de gestión total (listar todos, eliminar o reactivar usuarios) utilizan la dependencia requiere_admin. Si un cliente o empleado normal intenta acceder, el sistema lo bloquea automáticamente con un error 403 (Forbidden).

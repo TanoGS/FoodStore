@@ -1,13 +1,11 @@
 from fastapi import HTTPException, status, Response
 from datetime import datetime, timezone
 from sqlmodel import Session, select 
+from sqlalchemy.orm import selectinload
 from core.security import get_password_hash, verify_password, create_access_token
 from .models import Usuario, Rol, UsuarioRol 
 from .schemas import UsuarioCreate, UsuarioUpdate, UsuarioPublic
 from .unit_of_work import UsuarioUnitOfWork
-from sqlmodel import select
-from sqlalchemy.orm import selectinload
-from app.modules.usuario.models import Usuario
 
 
 class UsuarioService:
@@ -64,7 +62,6 @@ class UsuarioService:
             
             token = create_access_token(subject=str(usuario.id), roles=roles_del_usuario)
             
-            
             response.set_cookie(
                 key="access_token",
                 value=f"Bearer {token}",
@@ -78,7 +75,7 @@ class UsuarioService:
             return UsuarioPublic.model_validate(usuario)
 
     def logout(self, response: Response) -> dict:
-        #  DESTRUCCIÓN INMEDIATA DE LA SESIÓN 
+        # DESTRUCCIÓN INMEDIATA DE LA SESIÓN 
         response.delete_cookie(
             key="access_token",
             httponly=True,
@@ -87,7 +84,7 @@ class UsuarioService:
         return {"message": "Sesión cerrada de forma segura"}
 
     # ====================================================================
-    # 3. ACTUALIZACIÓN Y AUDITORÍA DE USUARIOS (NUEVO)
+    # 3. ACTUALIZACIÓN Y AUDITORÍA DE USUARIOS
     # ====================================================================
     def actualizar_usuario(self, usuario_id: int, data: UsuarioUpdate) -> UsuarioPublic:
         with UsuarioUnitOfWork(self._session) as uow:
@@ -114,7 +111,7 @@ class UsuarioService:
             return UsuarioPublic.model_validate(usuario)
 
     # ====================================================================
-    # 4. UTILIDADES Y SOFT DELETES (Sin Cambios)
+    # 4. UTILIDADES Y SOFT DELETES
     # ====================================================================
     def listar_usuarios(self, offset: int, limit: int):
         with UsuarioUnitOfWork(self._session) as uow:
@@ -163,8 +160,7 @@ class UsuarioService:
         Obtiene todos los usuarios de la base de datos, 
         incluyendo la lista de roles asociados a cada uno.
         """
-        # Buscamos a todos los usuarios e incluimos sus roles (RBAC)
-        statement = select(Usuario).options(selectinload(Usuario.roles_enlaces))
-        resultados = self._session.exec(statement).unique().all()
-        return resultados
-    
+        with UsuarioUnitOfWork(self._session) as uow:
+            statement = select(Usuario).options(selectinload(Usuario.roles_enlaces))
+            resultados = self._session.exec(statement).unique().all()
+            return resultados
