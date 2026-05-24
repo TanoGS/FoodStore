@@ -1,0 +1,3 @@
+catalogo, reactivar productos soft delete, y crear función que establezca stock en base a la cantidad de ingredientes,
+También debe mostrar los soft deleteados de todos
+Revisar el endpoint obtener mi perfil cuando haya más de un usuario logeado
